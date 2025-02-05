@@ -1,0 +1,416 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚓 ZAPATO G CODE</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: white;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #39ff14;
+            font-size: 3em;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(57, 255, 20, 0.5);
+        }
+        .welcome {
+            text-align: center;
+            color: #cccccc;
+            margin-bottom: 30px;
+            font-size: 1.2em;
+        }
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        button {
+            background-color: #333;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            background-color: #444;
+            transform: translateY(-2px);
+        }
+        button.active {
+            background-color: #39ff14;
+            color: #000;
+        }
+        .search-box {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 2px solid #333;
+            border-radius: 8px;
+            background-color: #222;
+            color: white;
+            font-size: 16px;
+        }
+        .search-box:focus {
+            outline: none;
+            border-color: #39ff14;
+            box-shadow: 0 0 10px rgba(57, 255, 20, 0.3);
+        }
+        .codes-container, .links-container {
+            display: none;
+            margin-top: 20px;
+        }
+        .code-item, .link-item {
+            background-color: #222;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .code-item:hover, .link-item:hover {
+            background-color: #2a2a2a;
+        }
+        .share-btn {
+            padding: 8px 16px;
+            background-color: #25D366;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .share-btn:hover {
+            background-color: #128C7E;
+        }
+        .code-count {
+            text-align: center;
+            margin: 20px 0;
+            color: #39ff14;
+            font-size: 1.1em;
+        }
+        .link-item a {
+            color: #39ff14;
+            text-decoration: none;
+        }
+        .link-item a:hover {
+            text-decoration: underline;
+        }
+        @media (max-width: 600px) {
+            .code-item, .link-item {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .share-btn {
+                width: 100%;
+                text-align: center;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚓 ZAPATO G CODE</h1>
+        <div class="welcome">¡Bienvenido al buscador de códigos de falta!</div>
+        
+        <div class="buttons">
+            <button id="codesBtn">Códigos</button>
+            <button id="linksBtn">Enlaces</button>
+        </div>
+
+        <input 
+            type="text" 
+            id="searchInput" 
+            class="search-box" 
+            placeholder="Buscar por código, artículo o descripción..."
+        >
+        
+        <div id="codeCount" class="code-count"></div>
+        <div id="codesContainer" class="codes-container"></div>
+        <div id="linksContainer" class="links-container"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Referencias a elementos del DOM
+            const searchInput = document.getElementById('searchInput');
+            const codesBtn = document.getElementById('codesBtn');
+            const linksBtn = document.getElementById('linksBtn');
+            const codesContainer = document.getElementById('codesContainer');
+            const linksContainer = document.getElementById('linksContainer');
+            const codeCount = document.getElementById('codeCount');
+
+            // Lista completa de infracciones
+            const infracciones = [
+                "1089 - Art. 88 - Sobrepasar sin hacerlo por la izquierda",
+                "2016 - Art. 98 - Conducir con alcoholemia superior a 0,5 g/l",
+                "2020 - Art. 98 - Conducir moto con alcoholemia superior a 0,2 g/l",
+                "2033 - Art. 98 - Conducir transporte de pasajeros con cualquier alcoholemia",
+                "2047 - Art. 97 - Conducir con estupefacientes",
+                "2050 - Art. 113 - Negativa a alcoholemia",
+                "3018 - Art. 81 - Conducir sin condiciones de seguridad",
+                "3021 - Art. 89 - No respetar giros y rotondas",
+                "3048 - Art. 92 - Obstruir encrucijadas",
+                "3079 - Art. 96 - Circular sin luces",
+                "3082 - Art. 99 - Circular en contramano",
+                "3096 - Art. 99 - Disminuir velocidad bruscamente",
+                "3124 - Art. 99 - Circular muy cerca del vehículo de adelante",
+                "3137 - Art. 99 - Circular marcha atrás fuera de lo permitido",
+                "3154 - Art. 88 - Sobrepasar sin respetar requisitos",
+                "3171 - Art. 99 - No respetar distancia entre camiones",
+                "3185 - Art. 99 - Transportar carga contaminante en vehículo inadecuado",
+                "3198 - Art. 99 - Transportar carga que afecte visibilidad",
+                "3209 - Art. 99 - Usar bocina fuera de lo permitido",
+                "3213 - Art. 116 - Usar teléfono o auricular conduciendo",
+                "3226 - Art. 99 - Contaminación vehicular",
+                "3230 - Art. 109 - Vehículo de emergencia irrespetando normas",
+                "3302 - Art. 99 - Maniobras riesgosas en curvas",
+                "3315 - Art. 99 - Vidrios polarizados no permitidos",
+                "3329 - Art. 99 - Dejar animales sueltos en ruta",
+                "3332 - Art. 99 - Obstaculizar tránsito",
+                "3359 - Art. 112 - Fuga luego de accidente",
+                "3363 - Art. 83 - Conducir inhabilitado",
+                "4036 - Art. 68 - Contaminación por ruidos",
+                "4040 - Art. 83 - Falta de matafuego y balizas",
+                "4053 - Art. 83 - Falta de cinturones seguridad",
+                "4067 - Art. 81 - Falta de condiciones de seguridad",
+                "4070 - Art. 83 - Falta de sistemas de seguridad",
+                "4084 - Art. 83 - Falta de casco y chaleco en moto",
+                "4097 - Art. 83 - Falta de sistemas originales",
+                "4108 - Art. 83 - No usar cinturón de seguridad",
+                "4112 - Art. 99 - Cubiertas en mal estado",
+                "4125 - Art. 99 - Moto o bici demasiado cerca de vehículo",
+                "4139 - Art. 99 - Remolcar vehículo no permitido",
+                "4142 - Art. 99 - Circular con tren de vehículos irregular",
+                "4169 - Art. 99 - Arrear animales en ruta",
+                "4173 - Art. 99 - Obstáculo en calzada",
+                "4186 - Art. 99 - Transitar con bandajes o cadenas fuera de lo permitido",
+                "4190 - Art. 99 - Circular con defensas o enganches peligrosos",
+                "4201 - Art. 83 - Dimensiones, peso o potencia inadecuados",
+                "4214 - Art. 65 - Fabricar vehículos inseguros",
+                "4228 - Art. 66 - Comercializar autopartes sin registro",
+                "4245 - Art. 68 - Conducir inhabilitado",
+                "5011 - Art. 79 - Negarse a exhibir documentación",
+                "5024 - Art. 83 - Circular con cédula vencida",
+                "5038 - Art. 83 - Falta de comprobante de seguro",
+                "5041 - Art. 83 - Circular sin seguro vigente",
+                "5055 - Art. 83 - Incumplir normas de transferencia",
+                "6043 - Art. 51 - Incumplir señalamiento vial",
+                "6101 - Art. 59 - Obstáculo sin paso alternativo",
+                "6115 - Art. 59 - Obstáculo impidiendo acceso a inmuebles",
+                "6162 - Art. 60 - Arrojar cosas a calzada",
+                "6193 - Art. 60 - Contaminación con humo o gases",
+                "7014 - Art. 100 - Estacionar sin dejar distancia reglamentaria",
+                "7027 - Art. 101 - Estacionar obstaculizando tránsito o visibilidad",
+                "7088 - Ley 13.169 - Art. 101 - Estacionar frente a salidas de espectáculos",
+                "7120 - Art. 101 - Camión estacionado en lugar prohibido",
+                "9017 - Conducir sin tener edad reglamentaria",
+                "9064 - Art. 83 - Conducir inhabilitado",
+                "9078 - Art. 83 - Conducir sin habilitación para ese vehículo",
+                "9081 - Art. 83 - Conducir habilitado pero sin llevar licencia",
+                "9095 - Art. 97 - Conducir con impedimentos físicos o psíquicos",
+                "9106 - Art. 99 - Permitir conducción a no habilitado",
+                "9119 - Art. 83 - Conducir sin habilitación",
+                "9123 - Art. 83 - Conducir con licencia vencida",
+                "9136 - Art. 83 - Licencia vencida más de 6 meses",
+                "9140 - Art. 83 - Licencia caduca o sin puntos",
+                "9153 - Art. 83 - Licencia no válida por cambio de datos",
+                "9167 - Art. 49 - Extender licencia irregular",
+                "10014 - Art. 110 - Circular con maquinaria especial irrespetando normas",
+                "11029 - Art. 83 - Circular sin patente",
+                "11032 - Art. 83 - Patente no correspondiente al vehículo",
+                "11046 - Art. 83 - Falta de patente delantera",
+                "11059 - Art. 83 - Falta de patente trasera",
+                "11063 - Art. 69 - Circulación sin grabado identificatorio",
+                "12017 - Art. 86 - No respetar prioridades de señalamiento",
+                "12020 - Art. 48 - No acatar órdenes de autoridades de tránsito",
+                "12034 - Art. 78 - No respetar indicaciones de autoridades",
+                "12106 - Art. 87 - No ceder paso a vehículo que desciende",
+                "13018 - Art. 76 - Omitir revisión técnica obligatoria",
+                "13022 - Art. 77 - Circular sin comprobante de revisión técnica",
+                "13052 - Art. 72 - Revisión técnica deficiente",
+                "15008 - Ley 13.169 - Art. 102 - Velocidad inadecuada",
+                "17031 - Art. 82 - Conducir profesional sin precaución",
+                "17058 - Art. 103 - Transporte excediendo dimensiones máximas",
+                "17062 - Art. 103 - Transporte excediendo peso máximo",
+                "17117 - Art. 103 - Transporte sin permiso habilitante",
+                "17134 - Art. 105 - Transporte carga sin inscripción",
+                "17147 - Art. 105 - Transporte carga sin carta de porte",
+                "17151 - Art. 105 - Transporte carga sin acreditación tripulación",
+                "17164 - Art. 105 - Transporte carga con exceso de dimensiones",
+                "17178 - Art. 105 - Transporte sustancias peligrosas irregular",
+                "17181 - Art. 105 - Transporte carga sin comprobante de inscripción",
+                "17195 - Art. 105 - Transporte carga con inscripción vencida",
+                "17206 - Art. 105 - Transporte contenedores en vehículo inadecuado",
+                "17219 - Art. 105 - Transporte carga sin sistema de sujeción",
+                "17223 - Art. 106 - Impedir actuación de revisores de carga",
+                "17236 - Art. 119 - Camión ingresando a puerto sin autorización",
+                "17253 - Art. 121 - Desacato a restricciones de circulación",
+                "18002 - Art. 84 - Bicicleta sin elementos de seguridad",
+                "19095 - Art. 118 - Alterar o destruir señales de tránsito",
+                "19290 - Art. 84 - Ciclista circular sin luces y elementos reflectivos",
+                "19320 - Ley 13.169 - Art. 84 - Ciclista circulando en espacios no permitidos"
+            ].join('\n');
+
+            // Lista de enlaces y leyes
+            const enlaces = [
+                { nombre: "RTO NACIONAL", url: "https://www.cent.utn.edu.ar/rto/" },
+                { nombre: "SENASA", url: "https://aps2.senasa.gov.ar/vdc/faces/consulta.jsp" },
+           { nombre: "JUZGADO DE FALTA ", url: "https://www.santafe.gob.ar/juzgadovirtual/consultaInfraccion.do?method=inicio"},        { nombre: "RTO PROVINCIAL", url: 
+"http://santafe.iapi.com.ar/ver_estado.asp" },       { 
+                    nombre: "Ley Provincial N. 3657 (adherida a la Ley Nacional N. 13,273) - Defensa de la Riqueza Forestal", 
+                    texto: "Esta ley regula la defensa y el aprovechamiento sostenible de los recursos forestales. Infracción: Las infracciones a esta ley pueden incluir tala ilegal, deforestación no autorizada o incumplimiento de planes de manejo forestal."
+                },
+                { 
+                    nombre: "Ley 18,284/84 (adherida a ASSAL)", 
+                    texto: "Regula el Código Alimentario Argentino y establece normas sobre la calidad y seguridad de los alimentos. Infracción: Las infracciones pueden incluir la comercialización de alimentos adulterados, falsificados o que no cumplen con las normas de calidad."
+                },
+                { 
+                    nombre: "Ley Nacional 23.737 - Estupefacientes", 
+                    texto: "Regula todo lo relacionado con el tráfico, tenencia y comercialización de drogas. Infracción: Las penas varían según la gravedad del delito, y pueden ir desde multas hasta prisión efectiva."
+                },
+                { 
+                    nombre: "Ley 13.774 de la Provincia de Santa Fe", 
+                    texto: "Artículos del Código Procesal Civil y Comercial de Santa Fe. Infracción: La adulteración de documentos públicos o privados puede ser sancionada con multas, inhabilitación o penas más severas según la gravedad del caso."
+                },
+                { 
+                    nombre: "Ley 13,169 - Artículo 38", 
+                    texto: "Regula aspectos relacionados con el medio ambiente y los recursos naturales en Santa Fe. Infracción: Daños ambientales, contaminación o incumplimiento de normas de protección ambiental."
+                },
+                { 
+                    nombre: "Artículo 206 del Código Procesal Administrativo (CPA) - Falsificación", 
+                    texto: "Sanciones por falsificación de documentos o información en procedimientos administrativos. Infracción: La falsificación de documentos puede ser penalizada con multas, inhabilitación o acciones legales adicionales."
+                }
+            ];
+
+            // Estado de visibilidad
+            let isCodesVisible = false;
+            let isLinksVisible = false;
+
+            // Event listeners
+            codesBtn.addEventListener('click', () => {
+                toggleCodes();
+                updateActiveButton(codesBtn);
+                searchCodes(searchInput.value);
+            });
+
+            linksBtn.addEventListener('click', () => {
+                toggleLinks();
+                updateActiveButton(linksBtn);
+                showLinks();
+            });
+
+            searchInput.addEventListener('input', (e) => {
+                if (isCodesVisible) {
+                    searchCodes(e.target.value);
+                }
+            });
+
+            // Guardar códigos al cargar la página
+            const allCodes = infracciones.split('\n');
+            let filteredCodes = allCodes;
+
+            // Función para alternar visibilidad de códigos
+            function toggleCodes() {
+                isCodesVisible = !isCodesVisible;
+                codesContainer.style.display = isCodesVisible ? 'block' : 'none';
+                if (isCodesVisible) {
+                    linksContainer.style.display = 'none';
+                    isLinksVisible = false;
+                }
+            }
+
+            // Función para alternar visibilidad de enlaces
+            function toggleLinks() {
+                isLinksVisible = !isLinksVisible;
+                linksContainer.style.display = isLinksVisible ? 'block' : 'none';
+                if (isLinksVisible) {
+                    codesContainer.style.display = 'none';
+                    isCodesVisible = false;
+                }
+            }
+
+            // Función para actualizar el botón activo
+            function updateActiveButton(activeButton) {
+                [codesBtn, linksBtn].forEach(btn => btn.classList.remove('active'));
+                activeButton.classList.add('active');
+            }
+
+            // Función para buscar códigos
+            function searchCodes(query) {
+                query = query.toLowerCase();
+                filteredCodes = allCodes.filter(code => 
+                    code.toLowerCase().includes(query)
+                );
+                
+                displayCodes(filteredCodes);
+                updateCodeCount();
+            }
+
+            // Función para mostrar códigos
+            function displayCodes(codes) {
+                codesContainer.innerHTML = codes.map(code => `
+                    <div class="code-item">
+                        <div>${code}</div>
+                        <a href="https://wa.me/?text=${encodeURIComponent(code)}" 
+                           class="share-btn" 
+                           target="_blank">
+                            Compartir
+                        </a>
+                    </div>
+                `).join('');
+            }
+
+            // Función para actualizar contador de códigos
+            function updateCodeCount() {
+                codeCount.textContent = `${filteredCodes.length} códigos encontrados`;
+            }
+
+            // Función para mostrar enlaces
+            function showLinks() {
+                linksContainer.innerHTML = enlaces.map(enlace => {
+                    if (enlace.url) {
+                        return `
+                            <div class="link-item">
+                                <a href="${enlace.url}" target="_blank">${enlace.nombre}</a>
+                            </div>
+                        `;
+                    } else {
+                        return `
+                            <div class="link-item">
+                                <div>
+                                    <strong>${enlace.nombre}</strong>
+                                    <p>${enlace.texto}</p>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }).join('');
+            }
+
+            // Inicialización
+            codesBtn.click();
+        });
+    </script>
+</body>
+</html>
